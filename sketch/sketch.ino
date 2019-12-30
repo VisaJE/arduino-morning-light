@@ -150,8 +150,8 @@ public:
     //normalize(); // Stupid implementation
   }
 
-  time_t toMs()
-  {
+  time_t asMs()
+  const {
     return ms + 60000 * (mins + hs * 60);
   }
 
@@ -161,7 +161,7 @@ public:
   }
   friend Time operator- (const Time& t1, const Time& t2)
   {
-    return Time(t1.toMs() - t2.toMs());
+    return Time(t1.asMs() - t2.asMs());
   }
   friend Time operator* (const int& sc, const Time& t2)
   {
@@ -191,11 +191,11 @@ public:
 
   friend bool operator> (const Time& t1, const Time& t2)
   {
-    return t1.toMs() > t2.toMs();
+    return t1.asMs() > t2.asMs();
   }
   friend bool operator< (const Time& t1, const Time& t2)
   {
-    return t1.toMs() < t2.toMs();
+    return t1.asMs() < t2.asMs();
   }
 
 };
@@ -242,14 +242,14 @@ void moveservo(int pos, int del=500)
 
 
 void setup() {
-  //Serial.begin(115200);
+  Serial.begin(115200);
   wdt_enable(WDTO_4S);
 
   moveservo(CENTERED);
   offDone = true;
   onDone = true;
 
-  dbuffer = AverageArray(10);
+  dbuffer = AverageArray(5);
   int sensorValue = analogRead(PIEZOPIN);
   float voltage = sensorValue * (5.0 / 1023.0);
   dbuffer.updateArray(voltage); // Keep track of long time average
@@ -258,7 +258,7 @@ void setup() {
 
 }
 
-constexpr float sensitivity = 0.6;
+constexpr float sensitivity = 0.9;
 
 
 void loop() {
@@ -290,7 +290,7 @@ void loop() {
       }
       else
       {
-        int pressLength = (int)((timenow.toMs() - pressT.toMs()) / 1000);
+        int pressLength = (int)((timenow.asMs() - pressT.asMs()) / 1000);
         lightT = timenow + wakeDelta + pressLength * wakeDeltaDelta;
         offT = timenow + offWait;
 
@@ -331,11 +331,11 @@ void loop() {
 
   wdt_reset();
 
-  //Serial.print(voltage);
-  //Serial.print(",");
-  //Serial.print(dbuffer.average());
-  //Serial.print(",");
-  //Serial.println(voltage - dbuffer.average());
+  Serial.print(voltage);
+  Serial.print(",");
+  Serial.print(dbuffer.average());
+  Serial.print(",");
+  Serial.println(voltage - dbuffer.average());
   //Serial.print(pressed);
   delay(250);
 }
