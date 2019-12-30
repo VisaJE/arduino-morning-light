@@ -159,6 +159,10 @@ public:
   {
     return Time(t1.ms + t2.ms, t1.mins + t2.mins, t1.hs + t2.hs);
   }
+  friend Time operator- (const Time& t1, const Time& t2)
+  {
+    return Time(t1.toMs() - t2.toMs());
+  }
   friend Time operator* (const int& sc, const Time& t2)
   {
     return Time(sc * t2.ms, sc * t2.mins, sc * t2.hs);
@@ -197,16 +201,18 @@ public:
 };
 
 
-//const Time wakeDelta = Time(0, 30, 8);
-//const Time wakeDeltaDelta = Time(0, 15, 0);
-const Time wakeDelta = Time(5000);
-const Time wakeDeltaDelta = Time(2000);
+const Time wakeDelta = Time(0, 15, 8);
+const Time wakeDeltaDelta = Time(0, 15, 0);
 
-const Time offWait = Time(2000);
+const Time offWait = Time(10000);
 
 Servo myservo;  // create servo object to control a servo
-int pressed; // Stores the sign of the voltage delta
-bool done; // Is light on
+bool pressDir = true; // Stores the sign of the voltage delta.
+bool pressed = false;
+bool firstSet = false; // Set the initial press dir
+
+bool offDone;
+bool onDone;
 AverageArray dbuffer;
 
 Time lightT;
@@ -240,19 +246,19 @@ void setup() {
   wdt_enable(WDTO_4S);
 
   moveservo(CENTERED);
-  done = true;
+  offDone = true;
+  onDone = true;
 
-  dbuffer = AverageArray(4);
+  dbuffer = AverageArray(10);
   int sensorValue = analogRead(PIEZOPIN);
   float voltage = sensorValue * (5.0 / 1023.0);
   dbuffer.updateArray(voltage); // Keep track of long time average
 
   auto timenow = Time(millis());
 
-  pressed = 0; // Find another way to get initial direction
 }
 
-constexpr float sensitivity = 0.9;
+constexpr float sensitivity = 0.6;
 
 
 void loop() {
@@ -262,46 +268,63 @@ void loop() {
   float voltage = sensorValue * (5.0 / 1023.0);
 
   dbuffer.updateArray(voltage); // Keep track of long time average
-  auto dif = voltage - dbuffer.average();
-  auto chg = abs(dif);
+  float dif = voltage - dbuffer.average();
+  float chg = abs(dif);
 
   if (chg > sensitivity)
   {
-    int dir = (int)dif/chg;
-    if (dir != pressed)
+    bool dir = (bool)(dif/chg + 1);
+
+    if (!firstSet)
     {
-      if (abs(pressed) < 2) // Just pressed
+      pressDir = !dir;
+      firstSet = true;
+    }
+
+    if (pressDir != dir)
+    {
+      if (!pressed)
       {
-        pressed = dir;
-        pressT= Time(millis());
+        pressT = Time(millis());
+        pressed = true;
       }
-      else // Released
+      else
       {
-        auto pressLength = (int)(timenow.toMs() - pressT.toMs()) / 1000;
-        lightT = pressT+ wakeDelta + pressLength * wakeDeltaDelta;
+        int pressLength = (int)((timenow.toMs() - pressT.toMs()) / 1000);
+        lightT = timenow + wakeDelta + pressLength * wakeDeltaDelta;
+        offT = timenow + offWait;
+
+        //Serial.print("Currently ");
+        //timenow.print();
+        //Serial.print("Light on at ");
+        //lightT.print();
+        //Serial.print("presslength was ");
+        //Serial.println(pressLength);
+
         for (int i = 0; i < pressLength + 1; i++)
         {
           moveservo(NOTIFY, 100);
           moveservo(CENTERED, 250);
         }
+        offDone = false;
+        onDone = false;
+        pressed = false;
       }
-
-      pressed += pressed;
-
     }
+    pressDir = dir;
   }
 
 
   // Actions
-  if (!done && timenow > lightT)
+  if (!onDone && timenow > lightT)
   {
     moveservo(LIGHTON);
-    done = true;
+    onDone = true;
   }
-  else if (done && timenow > offT)
+  else if (!offDone && timenow > offT)
   {
     moveservo(LIGHTOFF);
-    done = false;
+    offDone = true;
   }
   else
     moveservo(CENTERED);
@@ -310,8 +333,10 @@ void loop() {
 
   //Serial.print(voltage);
   //Serial.print(",");
-  //Serial.println(dbuffer.average());
-
+  //Serial.print(dbuffer.average());
+  //Serial.print(",");
+  //Serial.println(voltage - dbuffer.average());
+  //Serial.print(pressed);
   delay(250);
 }
 
