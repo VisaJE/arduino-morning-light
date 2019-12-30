@@ -242,7 +242,6 @@ void moveservo(int pos, int del=500)
 
 
 void setup() {
-  Serial.begin(115200);
   wdt_enable(WDTO_4S);
 
   moveservo(CENTERED);
@@ -294,17 +293,11 @@ void loop() {
         lightT = timenow + wakeDelta + pressLength * wakeDeltaDelta;
         offT = timenow + offWait;
 
-        //Serial.print("Currently ");
-        //timenow.print();
-        //Serial.print("Light on at ");
-        //lightT.print();
-        //Serial.print("presslength was ");
-        //Serial.println(pressLength);
-
         for (int i = 0; i < pressLength + 1; i++)
         {
           moveservo(NOTIFY, 100);
           moveservo(CENTERED, 250);
+          wdt_reset();
         }
         offDone = false;
         onDone = false;
@@ -331,12 +324,6 @@ void loop() {
 
   wdt_reset();
 
-  Serial.print(voltage);
-  Serial.print(",");
-  Serial.print(dbuffer.average());
-  Serial.print(",");
-  Serial.println(voltage - dbuffer.average());
-  //Serial.print(pressed);
   delay(250);
 }
 
