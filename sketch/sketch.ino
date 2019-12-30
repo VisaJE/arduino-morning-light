@@ -242,7 +242,7 @@ void moveservo(int pos, int del=500)
 
 
 void setup() {
-  Serial.begin(115200);
+  //Serial.begin(115200);
   wdt_enable(WDTO_4S);
 
   moveservo(CENTERED);
@@ -258,7 +258,7 @@ void setup() {
 
 }
 
-constexpr float sensitivity = 0.9;
+constexpr float sensitivity= 0.6;
 
 
 void loop() {
@@ -331,11 +331,16 @@ void loop() {
 
   wdt_reset();
 
-  Serial.print(voltage);
-  Serial.print(",");
-  Serial.print(dbuffer.average());
-  Serial.print(",");
-  Serial.println(voltage - dbuffer.average());
+  //Serial.print(voltage);
+  //Serial.print(",");
+  //Serial.print(dbuffer.average());
+  //Serial.print(",");
+
+  //Serial.print(0.9);
+  //Serial.print(",");
+  //Serial.print(-0.9);
+  //Serial.print(",");
+  //Serial.println(voltage - dbuffer.average());
   //Serial.print(pressed);
   delay(250);
 }
