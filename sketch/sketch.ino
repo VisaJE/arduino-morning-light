@@ -160,7 +160,7 @@ void setup() {
   offDone = true;
   onDone = true;
 
-  pinMode(SWITCHPIN, INPUT);
+  pinMode(SWITCHPIN, INPUT_PULLUP);
   auto timenow = Time(millis());
 
 }
@@ -171,9 +171,9 @@ constexpr float sensitivity= 0.6;
 void loop() {
   auto timenow = Time(millis());
 
-  auto switchPos = digitalRead(SWITCHPIN) == HIGH;
+  auto switchPos = digitalRead(SWITCHPIN) == LOW;
 
-  if (pressed != switchPos);
+  if (pressed != switchPos)
   {
 
     if (switchPos)
@@ -186,13 +186,6 @@ void loop() {
       int pressLength = (int)((timenow.asMs() - pressT.asMs()) / 1000);
       lightT = timenow + wakeDelta + pressLength * wakeDeltaDelta;
       offT = timenow + offWait;
-
-      //Serial.print("Currently ");
-      //timenow.print();
-      //Serial.print("Light on at ");
-      //lightT.print();
-      //Serial.print("presslength was ");
-      //Serial.println(pressLength);
 
       for (int i = 0; i < pressLength + 1; i++)
       {
@@ -223,7 +216,6 @@ void loop() {
 
   wdt_reset();
 
-  //Serial.print(pressed);
   delay(250);
 }
 
