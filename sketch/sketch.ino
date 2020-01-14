@@ -58,14 +58,12 @@ class Time
   Time(time_t millisecs=0,time_t minutes=0, time_t hours=0):
       ms(millisecs), mins(minutes), hs(hours)
   {
-    normalize();
   }
   ~Time() {}
 
     void addMs(time_t millisecs)
   {
     ms += millisecs;
-    //normalize(); // Stupid implementation
   }
 
   time_t asMs()
@@ -77,6 +75,12 @@ class Time
   {
     return Time(t1.ms + t2.ms, t1.mins + t2.mins, t1.hs + t2.hs);
   }
+
+  friend Time operator- (const Time& t1, const Time& t2)
+  {
+    return Time(t1.asMs() - t2.asMs());
+  }
+
   friend Time operator* (const int& sc, const Time& t2)
   {
     return Time(sc * t2.ms, sc * t2.mins, sc * t2.hs);
@@ -115,8 +119,8 @@ class Time
 };
 
 
-const Time wakeDelta = Time(0, 15, 8);
-const Time wakeDeltaDelta = Time(0, 15, 0);
+const Time wakeDelta = Time(0, 30, 8);
+const Time wakeDeltaDelta = Time(0, 30, 0);
 
 const Time offWait = Time(10000);
 
@@ -175,7 +179,6 @@ void loop() {
 
   if (pressed != switchPos)
   {
-
     if (switchPos)
     {
       pressT = Time(millis());
@@ -184,7 +187,7 @@ void loop() {
     else
     {
       int pressLength = (int)((timenow.asMs() - pressT.asMs()) / 1000);
-      lightT = timenow + wakeDelta + pressLength * wakeDeltaDelta;
+      lightT = timenow + wakeDelta - pressLength * wakeDeltaDelta;
       offT = timenow + offWait;
 
       for (int i = 0; i < pressLength + 1; i++)
